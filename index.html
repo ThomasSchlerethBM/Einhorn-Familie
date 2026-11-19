@@ -151,7 +151,7 @@ const FB_ROOT = "einhornfamilie";
     <p>💃 Im Tanzsaal tanzt die Prinzessin allein oder mit dem Prinzen (2 Spieler). Für Tanzpunkte gibt es 50 Pokale – zu sehen im Pokalzimmer.</p>
     <p>👶 Babys mit 20 Karotten füttern → sie werden groß. Große Einhörner bekommen nach 10 Karotten ein Baby – das kann man am Kiosk verkaufen.</p>
     <p>🤴 Mit X spielt der Prinz überall mit (A D laufen, W springen, Q = Tür / Ja). In ein anderes Zimmer geht es nur, wenn beide zustimmen.</p>
-    <p>🧸 Im Kleiderschrank gibt es Schlafanzüge und 20 Kuscheltiere zum Mitnehmen.</p>
+    <p>🧸 Im Kleiderschrank gibt es Schlafanzüge und 20 Kuscheltiere zum Mitnehmen. Der Prinz hat oben auf der Galerie seinen eigenen Schrank mit Roben, Ritterrüstungen und Schlafanzügen.</p>
     <p>💩 Kacka mit dem Traktor zur Scheune fahren = Punkte.</p>
     <button class="btn" id="startBtn">🦄 Neues Spiel</button>
     <button class="btn ghost" onclick="openLoad('menu')">📂 Spielstand laden</button>
@@ -201,17 +201,12 @@ const FB_ROOT = "einhornfamilie";
 <!-- ═════ KLEIDERSCHRANK ═════ -->
 <div class="overlay hidden" id="wardScr">
   <div class="panel" style="max-width:600px;">
-    <h1>👗 Kleiderschrank</h1>
-    <p>Kleider, Schlafanzüge, Reithelme und Kuscheltiere</p>
+    <h1 id="wardTitle">👗 Kleiderschrank</h1>
+    <p id="wardSub">Kleider, Schlafanzüge, Reithelme und Kuscheltiere</p>
     <div class="ward-wrap" style="margin-top:8px;">
       <div class="ward-preview"><canvas id="wardBig" width="260" height="340" style="width:130px;height:170px;"></canvas></div>
       <div>
-        <div class="tabs">
-          <button class="tab active" id="tabK" onclick="setWardTab('kleider')">👗 Kleider</button>
-          <button class="tab" id="tabP" onclick="setWardTab('pyjama')">🌙 Schlafanzüge</button>
-          <button class="tab" id="tabH" onclick="setWardTab('helme')">⛑️ Helme</button>
-          <button class="tab" id="tabT" onclick="setWardTab('kuschel')">🧸 Kuscheltiere</button>
-        </div>
+        <div class="tabs" id="wardTabs"></div>
         <div class="outfit-grid" id="outfitGrid"></div>
       </div>
     </div>
@@ -331,7 +326,7 @@ function waitSpot(i){
 // Geometrie im Schloss
 function IG(){
   const f0=H-70,f1=Math.round(H*0.45),sbx=W*0.43,run=Math.min((f0-f1)*0.95,W*0.3);
-  return{f0,f1,sb:{x:sbx,y:f0},st:{x:sbx+run,y:f1},exitX:70,wardX:Math.max(175,W*0.15),throneX:Math.max(320,W*0.3),balX:W-100};
+  return{f0,f1,sb:{x:sbx,y:f0},st:{x:sbx+run,y:f1},exitX:70,wardX:Math.max(175,W*0.15),throneX:Math.max(320,W*0.3),balX:W-100,pwardX:(sbx+run+W-156)/2};
 }
 
 // ═══════════════ INIT ═══════════════
@@ -344,7 +339,7 @@ function initU(){
     u.energy=100;
   });
   tractor.x=W*0.68;tractor.y=GROUND();tractor.vx=0;tractor.fr=true;tractor.cargo=0;tractor.wheelPhase=0;
-  plushLoc=Array(PLUSHIES.length).fill(null);prince.riding=false;pending=null;
+  plushLoc=Array(PLUSHIES.length).fill(null);prince.riding=false;prince.outfit=0;pending=null;
   Object.assign(girl,{x:cRect().doorX,y:GROUND(),vx:0,vy:0,fr:true,carrots:0,outfit:7,helmet:1,hasSaddle:false,out:false,plush:-1,jy:0,jv:0,
     walk:0,wave:0,floor:0,ix:0,st:-1,bx:0,onThrone:false});
   mode='uni';scene='outside';aIdx=0;rideIdx=-1;
@@ -454,18 +449,36 @@ window.sellUni=function(i,btn){
 window.buySaddle=function(){if(score>=15&&!girl.hasSaddle){score-=15;girl.hasSaddle=true;showMsg('🐴 Sattel gekauft! Geh zu einem Einhorn und drück R');renderShopItems();}};
 
 // ═══════════════ KLEIDERSCHRANK ═══════════════
-let wardTab='kleider';
-function openWardrobe(){gState='wardrobe';$('wardScr').classList.remove('hidden');renderWard();}
+let wardTab='kleider',wardWho='p';
+function openWardrobe(who){wardWho=who||'p';wardTab=wardWho==='k'?'uniform':'kleider';gState='wardrobe';keys={};$('wardScr').classList.remove('hidden');renderWard();}
 function closeWardrobe(){
   gState='playing';$('wardScr').classList.add('hidden');
+  if(wardWho==='k'){showMsg(`🤴 Der Prinz trägt jetzt: ${PRINCE_OUTFITS[prince.outfit].name}`);return;}
   const hw=HEADWEAR[girl.helmet];
   showMsg(`✨ ${OUTFITS[girl.outfit].name}${hw.type!=='none'?' + '+hw.name:''}${girl.plush>=0?' + 🧸 '+PLUSHIES[girl.plush].n:''}`);
 }
 window.setWardTab=function(t){wardTab=t;renderWard();};
 function prepCanvas(cv){const c=cv.getContext('2d');c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cv.width,cv.height);c.scale(cv.width/parseInt(cv.style.width),cv.width/parseInt(cv.style.width));return c;}
 function renderWard(){
-  [['kleider','tabK'],['pyjama','tabP'],['helme','tabH'],['kuschel','tabT']].forEach(([t,id])=>$(id).classList.toggle('active',wardTab===t));
+  const TABS=wardWho==='k'?[['uniform','👑 Uniform & Robe'],['armor','🛡️ Ritterrüstungen'],['kpyjama','🌙 Schlafanzüge']]
+    :[['kleider','👗 Kleider'],['pyjama','🌙 Schlafanzüge'],['helme','⛑️ Helme'],['kuschel','🧸 Kuscheltiere']];
+  $('wardTabs').innerHTML=TABS.map(([t,l])=>`<button class="tab${wardTab===t?' active':''}" onclick="setWardTab('${t}')">${l}</button>`).join('');
+  $('wardTitle').textContent=wardWho==='k'?'🤴 Schrank des Prinzen':'👗 Kleiderschrank';
+  $('wardSub').textContent=wardWho==='k'?'Uniformen, Roben, Ritterrüstungen und Schlafanzüge':'Kleider, Schlafanzüge, Reithelme und Kuscheltiere';
   const big=prepCanvas($('wardBig'));
+  if(wardWho==='k'){
+    drawPrince(big,{x:65,y:164,s:1.85,outfit:prince.outfit});
+    const grid=$('outfitGrid');grid.innerHTML='';
+    PRINCE_OUTFITS.map((o,i)=>({o,i})).filter(({o})=>wardTab==='uniform'?(o.style==='uniform'||o.style==='robe'):wardTab==='armor'?o.style==='armor':o.style==='pajama').forEach(({o,i})=>{
+      const btn=document.createElement('div');btn.className='outfit-btn'+(prince.outfit===i?' active':'');
+      const cv=document.createElement('canvas');cv.width=128;cv.height=160;cv.style.width='64px';cv.style.height='80px';btn.appendChild(cv);
+      const nm=document.createElement('div');nm.className='oname';nm.textContent=o.name;btn.appendChild(nm);
+      drawPrince(prepCanvas(cv),{x:32,y:79,s:0.85,outfit:i});
+      btn.addEventListener('click',()=>{prince.outfit=i;renderWard();});
+      grid.appendChild(btn);
+    });
+    return;
+  }
   drawPrincess(big,{x:65,y:162,s:1.95,outfit:girl.outfit,helmet:girl.helmet,plush:girl.plush});
   const grid=$('outfitGrid');grid.innerHTML='';
   let items;
@@ -684,7 +697,7 @@ function snapshot(name){
   let m=mode;if(m==='ride'&&rideIdx<0)m='girl';
   return{v:2,name,t:Date.now(),score,lvl,aIdx,mode:m,rideIdx,
     herd:FAM.map(u=>({n:u.name,sz:r(u.tsz||u.sz),a:u.adultSz||0,col:u.col,m:u.mane,h:u.horn,sp:u.spd,b:u.baby?1:0,f:u.fed||0,bo:u.born?1:0,x:r(u.x/W),y:r(u.y/H),e:Math.round(u.energy)})),
-    dance:danceTotal,
+    dance:danceTotal,po:prince.outfit,
     bals:bals.filter(b=>b.alive).map(b=>({x:r(b.x/W),y:r(b.by/H),c:b.col,r:Math.round(b.r)})),
     popped:bals.filter(b=>!b.alive).length,
     piles:poopPiles.map(p=>({x:r(p.x/W),a:Math.round(p.amount)})),
@@ -758,7 +771,7 @@ function applySave(s){
   if(s.herd&&s.herd.length){FAM.length=0;s.herd.forEach(h=>FAM.push({name:h.n,sz:h.sz,tsz:h.sz,adultSz:h.a||undefined,col:h.col,mane:h.m,horn:h.h,spd:h.sp,
     baby:!!h.b,fed:h.f||0,born:!!h.bo,x:h.x*W,y:h.y*H,vx:0,vy:0,fr:true,wait:false,wp:Math.random()*6.28,bp:Math.random()*6.28,tp:Math.random()*6.28,energy:h.e??100}));}
   else(s.fam||[]).forEach((f,i)=>{if(FAM[i]){FAM[i].x=f.x*W;FAM[i].y=f.y*H;FAM[i].energy=f.e??100;}});
-  danceTotal=s.dance||0;
+  danceTotal=s.dance||0;prince.outfit=s.po||0;
   bals=(s.bals||[]).map(b=>({x:b.x*W,y:b.y*H,by:b.y*H,col:b.c,r:b.r,ph:Math.random()*6.28,alive:true}));
   for(let i=0;i<(s.popped||0);i++)bals.push({alive:false});
   if(!bals.some(b=>b.alive))spawnBals();
@@ -805,7 +818,7 @@ addEventListener('keydown',e=>{
   const k=e.key.toLowerCase();
   if([' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault();
   if(gState==='shop'){if(e.key==='Escape'||e.key===' ')closeShop();return;}
-  if(gState==='wardrobe'){if(e.key==='Escape'||e.key==='Enter')closeWardrobe();return;}
+  if(gState==='wardrobe'){if(e.key==='Escape'||e.key==='Enter'||(k==='q'&&wardWho==='k'))closeWardrobe();return;}
   if(gState==='paused'){if(k==='p'||e.key==='Escape')resume();return;}
   if(gState!=='playing')return;
   keys[e.key]=true;if(e.key.length===1)keys[k]=true;
@@ -867,8 +880,9 @@ function castleKey(e,k){
     if(girl.floor===1&&near(g.st.x)<40)girl.st=0.98;
     else if(girl.floor===0&&girl.ix<g.exitX+45)request('p','castleOut');
   }
+  if(e.key==='Enter'&&girl.floor===1&&near(g.pwardX)<55){openWardrobe('k');return;}
   if(e.key==='Enter'&&girl.floor===0){
-    if(near(g.wardX)<60)openWardrobe();
+    if(near(g.wardX)<60)openWardrobe('p');
     else if(near(g.throneX)<50){girl.onThrone=!girl.onThrone;girl.vx=0;if(girl.onThrone){girl.ix=g.throneX;showMsg('👑 Die Prinzessin sitzt auf dem Thron!');}}
   }
 }
@@ -1337,25 +1351,29 @@ function drawThrone(tx,f0){
   X.fillStyle='#ffd700';X.beginPath();X.moveTo(tx-9,f0-122);X.lineTo(tx-9,f0-131);X.lineTo(tx-4.5,f0-126);X.lineTo(tx,f0-134);X.lineTo(tx+4.5,f0-126);X.lineTo(tx+9,f0-131);X.lineTo(tx+9,f0-122);X.closePath();X.fill();
   X.fillStyle='#e8204a';X.beginPath();X.arc(tx,f0-126,1.8,0,6.28);X.fill();
 }
-function drawWardrobe(wx,f0){
+function drawWardrobe(wx,f0,kp){
   const x=wx-48,y=f0-168,w=96,h=168;
-  const g=X.createLinearGradient(x,0,x+w,0);g.addColorStop(0,'#e9dcf5');g.addColorStop(0.5,'#fff8ff');g.addColorStop(1,'#d8c8ea');
+  const g=X.createLinearGradient(x,0,x+w,0);if(kp){g.addColorStop(0,'#c8d4f0');g.addColorStop(0.5,'#eef3ff');g.addColorStop(1,'#b4c2e6');}else{g.addColorStop(0,'#e9dcf5');g.addColorStop(0.5,'#fff8ff');g.addColorStop(1,'#d8c8ea');}
   X.fillStyle=g;X.fillRect(x,y,w,h);
-  X.fillStyle='#fff8ff';X.beginPath();X.moveTo(x-6,y);X.quadraticCurveTo(wx,y-28,x+w+6,y);X.closePath();X.fill();
+  X.fillStyle=kp?'#eef3ff':'#fff8ff';X.beginPath();X.moveTo(x-6,y);X.quadraticCurveTo(wx,y-28,x+w+6,y);X.closePath();X.fill();
   X.strokeStyle='#d4af37';X.lineWidth=3;X.strokeRect(x,y,w,h);X.beginPath();X.moveTo(x-6,y);X.quadraticCurveTo(wx,y-28,x+w+6,y);X.stroke();
   X.lineWidth=2;X.strokeRect(x+6,y+10,w/2-9,h-24);X.strokeRect(wx+3,y+10,w/2-9,h-24);
   // Spiegel links
   const mg=X.createLinearGradient(x+12,y+20,x+40,y+90);mg.addColorStop(0,'#cfe9ff');mg.addColorStop(0.5,'#8fb9e0');mg.addColorStop(1,'#d8f0ff');
   X.fillStyle=mg;X.beginPath();X.ellipse(x+w/4+1.5,y+62,15,34,0,0,6.28);X.fill();X.strokeStyle='#d4af37';X.stroke();
   X.fillStyle='rgba(255,255,255,'+(0.4+Math.sin(T*3)*0.4)+')';starShape(X,x+w/4-4,y+44,3);
-  // Herz rechts
-  X.fillStyle='#ff77bb';heartShape(X,wx+w/4-1.5,y+66,13);
+  // Herz / Wappen rechts
+  if(kp){const sx=wx+w/4-1.5,sy=y+54;X.fillStyle='#2f4fa8';X.beginPath();X.moveTo(sx-11,sy);X.lineTo(sx+11,sy);X.lineTo(sx+11,sy+14);X.quadraticCurveTo(sx+11,sy+24,sx,sy+30);X.quadraticCurveTo(sx-11,sy+24,sx-11,sy+14);X.closePath();X.fill();
+    X.strokeStyle='#d4af37';X.lineWidth=2;X.stroke();X.fillStyle='#ffd700';starShape(X,sx,sy+13,6);}
+  else{X.fillStyle='#ff77bb';heartShape(X,wx+w/4-1.5,y+66,13);}
   X.fillStyle='#d4af37';X.beginPath();X.arc(wx-5,y+h/2,3,0,6.28);X.arc(wx+5,y+h/2,3,0,6.28);X.fill();
   X.fillStyle='#b89a50';X.fillRect(x+4,f0-6,10,6);X.fillRect(x+w-14,f0-6,10,6);
   // Reithelme oben drauf
-  [[x+22,'#ff77bb'],[x+w-22,'#23232f']].forEach(([hx,col])=>{X.fillStyle=col;X.beginPath();X.arc(hx,y-6,10,Math.PI,0);X.closePath();X.fill();
+  if(kp){X.fillStyle='#c8ced9';X.beginPath();X.arc(x+24,y-6,10,Math.PI,0);X.closePath();X.fill();X.fillStyle='#e02a4a';X.beginPath();X.ellipse(x+24,y-20,3,6,0.3,0,6.28);X.fill();
+    X.fillStyle='#ffd700';X.beginPath();X.moveTo(x+w-34,y-2);X.lineTo(x+w-34,y-12);X.lineTo(x+w-28,y-7);X.lineTo(x+w-22,y-15);X.lineTo(x+w-16,y-7);X.lineTo(x+w-10,y-12);X.lineTo(x+w-10,y-2);X.closePath();X.fill();}
+  else[[x+22,'#ff77bb'],[x+w-22,'#23232f']].forEach(([hx,col])=>{X.fillStyle=col;X.beginPath();X.arc(hx,y-6,10,Math.PI,0);X.closePath();X.fill();
     X.fillStyle=drk(col,30);X.beginPath();X.ellipse(hx+8,y-5,6,2,0,0,6.28);X.fill();});
-  X.fillStyle='#fff';X.font='12px Fredoka, sans-serif';X.textAlign='center';X.fillText('👗 Kleiderschrank',wx,y-24);
+  X.fillStyle='#fff';X.font='12px Fredoka, sans-serif';X.textAlign='center';X.fillText(kp?'🤴 Schrank des Prinzen':'👗 Kleiderschrank',wx,y-24);
 }
 function drawCastleInterior(){
   const g=IG(),f0=g.f0,f1=g.f1;
@@ -1390,6 +1408,7 @@ function drawCastleInterior(){
   const galL=g.st.x,n=Math.max(0,Math.floor((g.balX-70-(galL+50))/150));
   for(let i=0;i<n;i++){
     const px=galL+60+i*150,py=f1-165,pw=100,ph=78,u=FAM[i%FAM.length];
+    if(Math.abs(px+pw/2-g.pwardX)<115)continue;
     X.fillStyle='#d4af37';X.fillRect(px-6,py-6,pw+12,ph+12);
     const pg=X.createLinearGradient(0,py,0,py+ph);pg.addColorStop(0,'#3a6a9a');pg.addColorStop(1,'#7ac08a');X.fillStyle=pg;X.fillRect(px,py,pw,ph);
     drawUnicorn({...u,x:px+pw/2,y:py+ph*0.55,sz:u.sz*0.5,fr:true,wait:true},false,false);
@@ -1421,6 +1440,7 @@ function drawCastleInterior(){
   X.fillStyle='#d4af37';X.beginPath();X.arc(ex+18,f0-55,3.5,0,6.28);X.fill();
   X.fillStyle='#fff';X.font='12px Fredoka, sans-serif';X.textAlign='center';X.fillText('🚪 Ausgang',ex,f0-122);
   drawWardrobe(g.wardX,f0);
+  drawWardrobe(g.pwardX,f1,true);
   drawThrone(g.throneX,f0);
   // Treppe
   const N=Math.max(8,Math.round((f0-f1)/20)),run=g.st.x-g.sb.x,rise=(f0-f1)/N,step=run/N;
@@ -1479,6 +1499,7 @@ function drawCastleInterior(){
     }else{
       if(near(g.st.x)<40)hint('↓ = Treppe runtergehen',hx,hy);
       else if(girl.ix>g.balX-50)hint('↑ = Auf den Balkon 🌙',hx,hy,'#aaddff');
+      else if(near(g.pwardX)<55)hint('Enter = Schrank des Prinzen 🤴',hx,hy,'#aaccff');
     }
   }
 }
@@ -1603,26 +1624,105 @@ function drawTrophy(c,x,y,s,k,earned){
 }
 
 // ═══════════════ PRINZ ═══════════════
+const PRINCE_OUTFITS=[
+  {name:'Blaue Uniform',style:'uniform',main:'#1f3f9a',cape:'#b0123a',sash:'#e8204a'},
+  {name:'Rote Uniform',style:'uniform',main:'#b0123a',cape:'#1f3f9a',sash:'#ffd700'},
+  {name:'Weiße Uniform',style:'uniform',main:'#eef0f8',cape:'#3a5fd0',sash:'#3a5fd0'},
+  {name:'Königsrobe',style:'robe',main:'#b0123a',trim:'#ffffff',belt:'#ffd700',ermine:true},
+  {name:'Blaue Robe',style:'robe',main:'#2a4ab8',trim:'#ffd700',belt:'#ffd700'},
+  {name:'Zauberer-Robe',style:'robe',main:'#4a2d8a',trim:'#ffd700',belt:'#ffd700',stars:true},
+  {name:'Goldene Festrobe',style:'robe',main:'#d9a520',trim:'#ffffff',belt:'#b0123a',ermine:true},
+  {name:'Waldrobe',style:'robe',main:'#2f7a44',trim:'#c8a060',belt:'#7a4a20'},
+  {name:'Winterrobe',style:'robe',main:'#dfefff',trim:'#9ac8ff',belt:'#6aa0e0'},
+  {name:'Silber-Rüstung',style:'armor',metal:'#c8ced9',tab:'#2f4fa8',emb:'star',plume:'#e02a4a'},
+  {name:'Gold-Rüstung',style:'armor',metal:'#e8c040',tab:'#ffffff',emb:'crown',plume:'#ffffff'},
+  {name:'Schwarze Rüstung',style:'armor',metal:'#55556a',tab:'#7a1a2a',emb:'star',plume:'#222230'},
+  {name:'Drachenritter',style:'armor',metal:'#9fb4a2',tab:'#2f8a44',emb:'dragon',plume:'#44cc66'},
+  {name:'Einhornritter',style:'armor',metal:'#eef0ff',tab:'#c25ac2',emb:'horn',plume:'#ff88cc',horn:true},
+  {name:'Rosenritter',style:'armor',metal:'#dccbd4',tab:'#d0305a',emb:'heart',plume:'#ff4d8d'},
+  {name:'Streifen-Pyjama',style:'pajama',main:'#3a6ad0',pat:'#ffffff',pt:'stripes',cap:'#3a6ad0'},
+  {name:'Sternen-Pyjama',style:'pajama',main:'#1e2a6a',pat:'#ffe066',pt:'stars',cap:'#1e2a6a'},
+  {name:'Mond-Pyjama',style:'pajama',main:'#5a3a8a',pat:'#ffe9a0',pt:'moons',cap:'#ffe9a0'},
+  {name:'Wolken-Pyjama',style:'pajama',main:'#8fcbff',pat:'#ffffff',pt:'clouds',cap:'#ffffff'},
+  {name:'Punkte-Pyjama',style:'pajama',main:'#c84a3a',pat:'#ffffff',pt:'dots',cap:'#c84a3a'},
+  {name:'Dino-Pyjama',style:'pajama',main:'#5ab86a',pat:'#2f7a44',pt:'dots',cap:'#5ab86a',spikes:true},
+];
 function drawPrince(c,o){
-  const s=o.s||1,wk=Math.sin(o.walk||0)*0.38,skin='#ffd9bd',hair='#e2b23c',blue='#1f3f9a';
+  const of=PRINCE_OUTFITS[o.outfit!=null?o.outfit:prince.outfit]||PRINCE_OUTFITS[0],st=of.style;
+  const s=o.s||1,wk=Math.sin(o.walk||0)*0.38,skin='#ffd9bd',hair='#e2b23c';
+  const top=st==='armor'?of.metal:of.main;
   c.save();c.translate(o.x,o.y);c.scale(o.fr===false?-s:s,s);
   if(o.glow){c.shadowColor='#88aaff';c.shadowBlur=14;}
-  c.fillStyle='#b0123a';c.beginPath();c.moveTo(-8,-52);c.quadraticCurveTo(-17,-30,-15,-12);c.lineTo(6,-12);c.lineTo(6,-52);c.closePath();c.fill();
+  // Umhang
+  if(st==='uniform'||st==='armor'){c.fillStyle=st==='armor'?drk(of.tab,30):of.cape;c.beginPath();c.moveTo(-8,-52);c.quadraticCurveTo(-17,-30,-15,-12);c.lineTo(6,-12);c.lineTo(6,-52);c.closePath();c.fill();}
+  else if(st==='robe'&&!o.sit){c.fillStyle=drk(of.main,40);c.beginPath();c.moveTo(-8,-52);c.quadraticCurveTo(-18,-28,-17,-2);c.lineTo(6,-2);c.lineTo(6,-52);c.closePath();c.fill();}
+  if(st==='pajama'&&of.spikes){c.fillStyle=of.pat;c.beginPath();[-48,-41,-34].forEach(yy=>{c.moveTo(-8,yy-3);c.lineTo(-12.5,yy);c.lineTo(-8,yy+3);});c.fill();}
   c.shadowBlur=0;
-  if(o.sit)[[-2,0.82],[1.5,1]].forEach(([dx,sh])=>{c.globalAlpha=sh;c.fillStyle='#f4f0ea';c.fillRect(-3+dx,-26,13,4.6);c.fillRect(7+dx,-26,4.6,17);
-    c.fillStyle='#151520';c.fillRect(7+dx,-16,4.8,8);c.fillRect(7+dx,-11,7.5,3);c.globalAlpha=1;});
-  else [[-3.5,wk],[3.5,-wk]].forEach(([lx,rot])=>{c.save();c.translate(lx,-24);c.rotate(rot);
-    c.fillStyle='#f4f0ea';c.fillRect(-2.2,0,4.4,21);c.fillStyle='#151520';c.fillRect(-2.5,12,5,10);c.fillRect(-2.5,19.5,7,3);c.restore();});
-  const arm=(sx,rot)=>{c.save();c.translate(sx,-49);c.rotate(rot);c.fillStyle=blue;c.fillRect(-2,0,4,13);c.fillStyle='#fff';c.beginPath();c.arc(0,14,2.3,0,6.28);c.fill();c.restore();};
+  // Beine
+  const legC=st==='armor'?of.metal:st==='pajama'?of.main:st==='robe'?'#3a2a2a':'#f4f0ea';
+  const shoeC=st==='armor'?drk(of.metal,45):st==='pajama'?'#ffffff':'#151520';
+  if(o.sit)[[-2,0.82],[1.5,1]].forEach(([dx,sh])=>{
+    c.globalAlpha=sh;c.fillStyle=legC;c.fillRect(-3+dx,-26,13,4.6);c.fillRect(7+dx,-26,4.6,17);
+    c.fillStyle=shoeC;if(st==='uniform'||st==='armor')c.fillRect(7+dx,-16,4.8,8);c.fillRect(7+dx,-11,7.5,3);c.globalAlpha=1;});
+  else [[-3.5,wk],[3.5,-wk]].forEach(([lx,rot])=>{
+    c.save();c.translate(lx,-24);c.rotate(rot);c.fillStyle=legC;c.fillRect(-2.2,0,4.4,21);
+    if(st==='pajama'){
+      if(of.pt==='stripes'){c.fillStyle=of.pat;for(let yy=2;yy<19;yy+=4)c.fillRect(-2.2,yy,4.4,1.2);}else{pjMark(c,of.pt,0,6,of.pat,of.main);pjMark(c,of.pt,0,13,of.pat,of.main);}
+      c.fillStyle=shoeC;c.beginPath();c.ellipse(1.2,21,4.4,2.6,0,0,6.28);c.fill();
+    }else if(st==='armor'){c.fillStyle=lgt(of.metal,45);c.fillRect(-2.2,8,4.4,2.5);c.fillStyle=shoeC;c.fillRect(-2.6,18,7.5,4);}
+    else{c.fillStyle=shoeC;if(st==='uniform')c.fillRect(-2.5,12,5,10);c.fillRect(-2.5,19.5,7,3);}
+    c.restore();});
+  // Arme
+  const handC=st==='uniform'?'#ffffff':st==='armor'?drk(of.metal,25):skin;
+  const arm=(sx,rot)=>{c.save();c.translate(sx,-49);c.rotate(rot);c.fillStyle=top;c.fillRect(-2,0,4,13);
+    if(st==='robe'){c.fillStyle=of.trim;c.fillRect(-2.7,10,5.4,2.6);}
+    if(st==='armor'){c.fillStyle=lgt(of.metal,40);c.fillRect(-2.2,5.5,4.4,2);}
+    c.fillStyle=handC;c.beginPath();c.arc(0,14,2.3,0,6.28);c.fill();c.restore();};
   arm(-8,o.armsUp?2.95:(o.bouquet?-0.5:wk*0.8));
-  c.fillStyle=blue;c.beginPath();c.moveTo(-8,-52);c.lineTo(8,-52);c.lineTo(8.5,-28);c.lineTo(-8.5,-28);c.closePath();c.fill();
-  c.beginPath();c.moveTo(-8.5,-30);c.lineTo(-10,-21);c.lineTo(-2,-28);c.closePath();c.fill();
-  c.beginPath();c.moveTo(8.5,-30);c.lineTo(10,-21);c.lineTo(2,-28);c.closePath();c.fill();
-  c.strokeStyle='#e8204a';c.lineWidth=3;c.beginPath();c.moveTo(-7,-51);c.lineTo(7,-31);c.stroke();
-  c.fillStyle='#d4af37';[-47,-42,-37,-32].forEach(yy=>{c.beginPath();c.arc(-3.5,yy,0.9,0,6.28);c.fill();});
-  c.fillRect(-8.5,-30,17,2.5);
-  c.fillStyle='#ffd700';c.beginPath();c.ellipse(-8.5,-51,4.2,2.3,0,0,6.28);c.ellipse(8.5,-51,4.2,2.3,0,0,6.28);c.fill();
+  // Rumpf
+  if(st==='uniform'){
+    c.fillStyle=of.main;c.beginPath();c.moveTo(-8,-52);c.lineTo(8,-52);c.lineTo(8.5,-28);c.lineTo(-8.5,-28);c.closePath();c.fill();
+    c.beginPath();c.moveTo(-8.5,-30);c.lineTo(-10,-21);c.lineTo(-2,-28);c.closePath();c.fill();
+    c.beginPath();c.moveTo(8.5,-30);c.lineTo(10,-21);c.lineTo(2,-28);c.closePath();c.fill();
+    c.strokeStyle=of.sash;c.lineWidth=3;c.beginPath();c.moveTo(-7,-51);c.lineTo(7,-31);c.stroke();
+    c.fillStyle='#d4af37';[-47,-42,-37,-32].forEach(yy=>{c.beginPath();c.arc(-3.5,yy,0.9,0,6.28);c.fill();});
+    c.fillRect(-8.5,-30,17,2.5);
+  }else if(st==='robe'){
+    const g=c.createLinearGradient(0,-52,0,-2);g.addColorStop(0,lgt(of.main,25));g.addColorStop(1,drk(of.main,20));c.fillStyle=g;c.beginPath();
+    if(o.sit){c.moveTo(-8,-52);c.lineTo(8,-52);c.lineTo(10,-30);c.quadraticCurveTo(14,-23,18,-18);c.lineTo(-10,-20);c.closePath();}
+    else{c.moveTo(-8,-52);c.lineTo(8,-52);c.lineTo(13,-2);c.lineTo(-13,-2);c.closePath();}
+    c.fill();
+    c.fillStyle=of.trim;
+    if(!o.sit){c.fillRect(-1.6,-50,3.2,48);c.fillRect(-13,-5.5,26,3.5);}
+    c.beginPath();c.ellipse(0,-51,9.5,3.2,0,0,6.28);c.fill();
+    if(of.ermine){c.fillStyle='#222';[[-5,-51],[0,-50],[5,-51]].concat(o.sit?[]:[[-9,-4],[-3,-4],[3,-4],[9,-4],[0,-20],[0,-38]]).forEach(([dx,dy])=>{c.fillRect(dx-0.5,dy-1,1,2);});}
+    if(of.stars){c.fillStyle='#ffe066';[[-7,-12],[6,-20],[-5,-30],[8,-8],[5,-42],[-6,-44]].forEach(([sx,sy])=>{if(!o.sit||sy<-22)starShape(c,sx,sy,1.9);});}
+    c.fillStyle=of.belt;c.fillRect(-8.5,-34,17,2.6);
+  }else if(st==='armor'){
+    const mg=c.createLinearGradient(-9,0,9,0);mg.addColorStop(0,drk(of.metal,30));mg.addColorStop(0.45,lgt(of.metal,45));mg.addColorStop(1,drk(of.metal,35));
+    c.fillStyle=mg;c.beginPath();c.moveTo(-8.5,-52);c.lineTo(8.5,-52);c.lineTo(8.5,-26);c.lineTo(-8.5,-26);c.closePath();c.fill();
+    c.fillStyle=drk(of.metal,15);c.fillRect(-9,-28,18,3);c.fillRect(-9.5,-25,19,3);
+    c.fillStyle=of.tab;c.beginPath();c.moveTo(-5.5,-49);c.lineTo(5.5,-49);c.lineTo(6,-17);c.lineTo(0,-14);c.lineTo(-6,-17);c.closePath();c.fill();
+    c.fillStyle=of.tab==='#ffffff'?'#d4af37':'#ffd700';
+    if(of.emb==='star')starShape(c,0,-39,4.2);
+    else if(of.emb==='heart'){c.fillStyle='#ffffff';heartShape(c,0,-38,4.6);}
+    else if(of.emb==='horn'){c.beginPath();c.moveTo(-2,-33);c.lineTo(2,-33);c.lineTo(0.6,-45);c.closePath();c.fill();}
+    else if(of.emb==='crown'){c.fillStyle='#d4af37';c.beginPath();c.moveTo(-4,-35);c.lineTo(-4,-41);c.lineTo(-2,-38.5);c.lineTo(0,-42.5);c.lineTo(2,-38.5);c.lineTo(4,-41);c.lineTo(4,-35);c.closePath();c.fill();}
+    else if(of.emb==='dragon'){c.beginPath();c.moveTo(-4.5,-34);c.lineTo(-1,-43);c.lineTo(0,-38);c.lineTo(1,-43);c.lineTo(4.5,-34);c.lineTo(0,-36);c.closePath();c.fill();}
+    c.fillStyle='#3a2414';c.fillRect(-9,-31,18,2.5);
+    c.strokeStyle='#d8dee8';c.lineWidth=2;c.beginPath();c.moveTo(-9,-30);c.lineTo(-13,-7);c.stroke();c.fillStyle='#d4af37';c.fillRect(-12.5,-32,6,1.8);
+  }else{
+    c.fillStyle=of.main;c.beginPath();c.moveTo(-8,-52);c.lineTo(8,-52);c.lineTo(8.5,-27);c.lineTo(-8.5,-27);c.closePath();c.fill();
+    if(of.pt==='stripes'){c.fillStyle=of.pat;for(let yy=-50;yy<-27;yy+=4)c.fillRect(-8,yy,16.5,1.2);}
+    else [[-4,-47],[4,-44],[-3,-39],[4,-34],[-4,-31]].forEach(([mx,my])=>pjMark(c,of.pt,mx,my,of.pat,of.main));
+    c.fillStyle='#fff';c.beginPath();c.moveTo(-5,-52);c.lineTo(0,-47.5);c.lineTo(5,-52);c.lineTo(2.5,-52);c.lineTo(0,-50);c.lineTo(-2.5,-52);c.closePath();c.fill();
+  }
+  // Schultern
+  if(st==='uniform'){c.fillStyle='#ffd700';c.beginPath();c.ellipse(-8.5,-51,4.2,2.3,0,0,6.28);c.ellipse(8.5,-51,4.2,2.3,0,0,6.28);c.fill();}
+  else if(st==='armor'){c.fillStyle=lgt(of.metal,25);c.beginPath();c.ellipse(-8.5,-50.5,5.4,3.5,0,0,6.28);c.ellipse(8.5,-50.5,5.4,3.5,0,0,6.28);c.fill();
+    c.strokeStyle=drk(of.metal,30);c.lineWidth=0.8;c.beginPath();c.ellipse(-8.5,-50.5,5.4,3.5,0,0,6.28);c.ellipse(8.5,-50.5,5.4,3.5,0,0,6.28);c.stroke();}
   arm(8,o.armsUp?-2.95:o.hold?-2.65:o.wave>0?-2.5+Math.sin(T*14)*0.3:-wk*0.8);
+  // Kopf
   c.fillStyle=skin;c.fillRect(-2,-56,4,5);c.beginPath();c.arc(0,-63,10.5,0,6.28);c.fill();
   const fx=1.3,blink=((T+1.7)%3.9)<0.13;
   [fx-3.7,fx+3.7].forEach(ex=>{
@@ -1633,8 +1733,22 @@ function drawPrince(c,o){
   c.strokeStyle='#a0485a';c.lineWidth=1.2;c.lineCap='round';c.beginPath();c.arc(fx,-60,2.6,0.2*Math.PI,0.8*Math.PI);c.stroke();
   c.fillStyle=hair;c.beginPath();c.moveTo(-10.8,-62);c.quadraticCurveTo(-12,-75.5,0,-75);c.quadraticCurveTo(12,-75.5,10.8,-62);
   c.quadraticCurveTo(9,-68,5,-69);c.quadraticCurveTo(-2,-66,-6,-69.5);c.quadraticCurveTo(-9,-67,-10.8,-62);c.closePath();c.fill();
-  c.fillStyle='#ffd700';c.beginPath();c.moveTo(-6,-73);c.lineTo(-6,-79);c.lineTo(-3,-76);c.lineTo(0,-81);c.lineTo(3,-76);c.lineTo(6,-79);c.lineTo(6,-73);c.closePath();c.fill();
-  c.fillStyle='#3aa0ff';c.beginPath();c.arc(0,-76,1.1,0,6.28);c.fill();
+  // Kopfbedeckung
+  if(st==='armor'){
+    const hg=c.createLinearGradient(-12,0,12,0);hg.addColorStop(0,drk(of.metal,25));hg.addColorStop(0.45,lgt(of.metal,50));hg.addColorStop(1,drk(of.metal,30));
+    c.fillStyle=of.plume;c.beginPath();c.moveTo(0,-75);c.quadraticCurveTo(-4+Math.sin(T*3)*1.5,-91,-14+Math.sin(T*3)*2,-82);c.quadraticCurveTo(-6,-80,0,-73);c.fill();
+    c.fillStyle=hg;c.beginPath();c.arc(0,-64,11.8,Math.PI,0);c.lineTo(11.8,-55);c.lineTo(8.6,-54);c.lineTo(8.6,-66);c.lineTo(-8.6,-66);c.lineTo(-8.6,-54);c.lineTo(-11.8,-55);c.closePath();c.fill();
+    c.fillStyle=drk(of.metal,20);c.fillRect(-12,-67.5,24,2);c.fillRect(fx-0.8,-66,1.6,5.5);
+    if(of.horn){const g2=c.createLinearGradient(0,-75,1,-90);g2.addColorStop(0,'#ffd700');g2.addColorStop(1,'#fff6c0');c.fillStyle=g2;c.beginPath();c.moveTo(-2.2,-75);c.lineTo(2.6,-75);c.lineTo(1.2,-90);c.closePath();c.fill();}
+  }else if(st==='pajama'){
+    c.fillStyle=of.cap;c.beginPath();c.moveTo(-11.5,-65);c.quadraticCurveTo(-6,-83,6,-81);c.quadraticCurveTo(16,-79,17.5,-67);c.quadraticCurveTo(12,-72,10.5,-66);c.closePath();c.fill();
+    if(of.cap!=='#ffffff'&&of.pt!=='stripes')pjMark(c,of.pt,2,-75,of.pat,of.cap);
+    c.fillStyle='#ffffff';c.beginPath();c.roundRect(-11.8,-68,23.6,3.6,1.8);c.fill();
+    c.beginPath();c.arc(17.5,-66,2.7,0,6.28);c.fill();
+  }else{
+    c.fillStyle='#ffd700';c.beginPath();c.moveTo(-6,-73);c.lineTo(-6,-79);c.lineTo(-3,-76);c.lineTo(0,-81);c.lineTo(3,-76);c.lineTo(6,-79);c.lineTo(6,-73);c.closePath();c.fill();
+    c.fillStyle='#3aa0ff';c.beginPath();c.arc(0,-76,1.1,0,6.28);c.fill();
+  }
   c.restore();
 }
 function drawBouquet(c,x,y,s){
@@ -2085,7 +2199,7 @@ function drawPlacedPlush(sc,yFor){
 }
 
 // ═══════════════ PRINZ ALS ZWEITER SPIELER ═══════════════
-const prince={on:false,x:0,vx:0,fr:false,walk:0,jy:0,jv:0,floor:0,ix:0,st:-1,bx:0,tx:0,riding:false};
+const prince={outfit:0,on:false,x:0,vx:0,fr:false,walk:0,jy:0,jv:0,floor:0,ix:0,st:-1,bx:0,tx:0,riding:false};
 let pending=null;
 const ACTIONS={
   castleIn:{label:'ins Schloss gehen',run:()=>enterCastle()},
@@ -2164,6 +2278,7 @@ function princeKey(e,k){
       if(prince.floor===0&&n(HD.d1)<45){request('k','ballroom');return true;}
       if(prince.floor===0&&n(HD.d2)<45){request('k','trophy');return true;}
       if(prince.floor===1&&prince.ix>g.balX-50){request('k','balcony');return true;}
+      if(prince.floor===1&&n(g.pwardX)<55){openWardrobe('k');return true;}
       if(prince.floor===0&&n(g.exitX)<45){request('k','castleOut');return true;}
       if(k==='w'&&prince.floor===0&&n(g.sb.x)<40){prince.st=0.02;return true;}
       if(k==='w')jump(prince);
@@ -2207,7 +2322,8 @@ function drawPrinceScene(){
     else if(prince.floor===0&&n(g.exitX)<45)h='S = Schloss verlassen (gemeinsam)';
     else if(prince.floor===0&&n(g.sb.x)<40)h='W = Treppe hoch';
     else if(prince.floor===1&&n(g.st.x)<40)h='S = Treppe runter';
-    else if(prince.floor===1&&prince.ix>g.balX-50)h='W = Balkon (gemeinsam)';}
+    else if(prince.floor===1&&prince.ix>g.balX-50)h='W = Balkon (gemeinsam)';
+    else if(prince.floor===1&&n(g.pwardX)<55)h='Q = Umziehen 🤴';}
   if(scene==='balcony'&&prince.bx<W*0.25)h='S = Zurück ins Schloss (gemeinsam)';
   if(scene==='trophy'&&prince.tx<95)h='S = Zurück in die Halle (gemeinsam)';
   if(h)hint(h,x,y-prince.jy+44,'#aaccff');

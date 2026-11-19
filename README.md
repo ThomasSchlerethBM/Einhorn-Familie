@@ -30,7 +30,7 @@ Mit **X** kommt der Prinz überall dazu (draußen, im Schloss, auf dem Balkon, i
 
 ### Kleiderschrank
 
-12 Kleider, 6 Schlafanzüge, 8 Kopfbedeckungen und 20 Kuscheltiere. Ein Kuscheltier trägt die Prinzessin überall mit (auch beim Reiten und Tanzen) und kann es mit **L** irgendwo ablegen und später wieder aufheben.
+12 Kleider, 6 Schlafanzüge, 8 Kopfbedeckungen und 20 Kuscheltiere für die Prinzessin. Der Prinz hat oben auf der Galerie seinen eigenen Schrank: 3 Uniformen, 6 Roben, 6 Ritterrüstungen und 6 Schlafanzüge mit Schlafmütze (Prinz: Q, Prinzessin: Enter). Ein Kuscheltier trägt die Prinzessin überall mit (auch beim Reiten und Tanzen) und kann es mit **L** irgendwo ablegen und später wieder aufheben.
 
 ### Tanzsaal (1 oder 2 Spieler)
 
