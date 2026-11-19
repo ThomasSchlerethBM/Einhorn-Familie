@@ -9,7 +9,7 @@ HTML5-Spiel (eine einzige `index.html`, kein Build-Schritt) mit einer Einhorn-Fa
 | Taste | Aktion |
 |---|---|
 | ← → ↑ ↓ | Fliegen / Laufen / Treppe |
-| 1–6 | Einhorn wählen (Papa, Mama, Oma, Opa, Kind, Bruder) |
+| 1–9 | Einhorn wählen (Papa, Mama, Oma, Opa, Kind, Bruder, eigene Babys) |
 | Leertaste | Regenbogen |
 | K | Kacka 💩 |
 | T | Traktor an/aus 🚜 |
@@ -20,6 +20,26 @@ HTML5-Spiel (eine einzige `index.html`, kein Build-Schritt) mit einer Einhorn-Fa
 | Enter | Kiosk, Kleiderschrank, Thron |
 | W | Winken (auf dem Balkon winken die Einhörner zurück) |
 | P | Pause, Spielstand speichern und laden |
+| M | Musik an/aus |
+
+### Tanzsaal (1 oder 2 Spieler)
+
+| | 👸 Prinzessin (Spieler 1) | 🤴 Prinz (Spieler 2) |
+|---|---|---|
+| Laufen | ← → | A D |
+| Figur | Leertaste | Q |
+| Pirouette | Figur allein | Figur allein |
+| Sprung | ↑ + Figur | W + Q |
+| Knicks / Verbeugung | ↓ + Figur | S + Q |
+| Gleiten | ← → + Figur | A D + Q |
+
+Stehen beide nah beieinander und drücken fast gleichzeitig, gibt es eine gemeinsame Figur: Walzer, Hebefigur (↑), Dip (↓) oder Doppel-Pirouette (← →). Im Takt des Herzens gedrückt = Perfekt (×2), abwechslungsreiche Figuren erhöhen die Combo.
+
+Für Tanzpunkte gibt es 50 Pokale (Bronze, Silber, Gold, Kristall, Regenbogen) mit Verleihung vor Publikum und Blumen. Die Pokale stehen im Pokalzimmer.
+
+### Einhorn-Zucht
+
+Babys (Kind, Bruder) werden nach 20 Karotten groß. Große Einhörner bekommen nach 10 Karotten ein Baby. Eigene Babys kann man am Kiosk verkaufen (Baby 25⭐, groß 60⭐). Maximal 12 Einhörner auf der Weide.
 
 ## Spielstände & Bestenliste (Firebase)
 
