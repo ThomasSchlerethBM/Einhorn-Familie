@@ -10,7 +10,7 @@ HTML5-Spiel (eine einzige `index.html`, kein Build-Schritt) mit einer Einhorn-Fa
 |---|---|
 | ← → ↑ ↓ | Fliegen / Laufen / Treppe |
 | 1–9 | Einhorn wählen (Papa, Mama, Oma, Opa, Kind, Bruder, eigene Babys) |
-| Leertaste | Regenbogen |
+| Leertaste | Regenbogen (Einhorn) / Springen (Prinzessin) |
 | K | Kacka 💩 |
 | T | Traktor an/aus 🚜 |
 | G | Prinzessin an/aus 👸 |
@@ -21,6 +21,16 @@ HTML5-Spiel (eine einzige `index.html`, kein Build-Schritt) mit einer Einhorn-Fa
 | W | Winken (auf dem Balkon winken die Einhörner zurück) |
 | P | Pause, Spielstand speichern und laden |
 | M | Musik an/aus |
+| X | Prinz spielt mit (2. Spieler) |
+| L | Kuscheltier ablegen / aufheben |
+
+### Zu zweit spielen (Prinz)
+
+Mit **X** kommt der Prinz überall dazu (draußen, im Schloss, auf dem Balkon, im Pokalzimmer, im Tanzsaal). Spieler 2 läuft mit **A D**, springt mit **W**, geht Treppen mit **W/S** und nutzt **Q** an Türen. In ein anderes Zimmer geht es nur, wenn **beide zustimmen**: Einer schlägt es an der Tür vor, der andere bestätigt (👸 Enter / 🤴 Q). Beim Reiten sitzen beide auf demselben Einhorn, der Prinz zaubert mit Q einen Regenbogen.
+
+### Kleiderschrank
+
+12 Kleider, 6 Schlafanzüge, 8 Kopfbedeckungen und 20 Kuscheltiere. Ein Kuscheltier trägt die Prinzessin überall mit (auch beim Reiten und Tanzen) und kann es mit **L** irgendwo ablegen und später wieder aufheben.
 
 ### Tanzsaal (1 oder 2 Spieler)
 
