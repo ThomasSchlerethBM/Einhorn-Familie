@@ -510,7 +510,7 @@ let gState='menu', mode='uni', scene='outside', aIdx=0, rideIdx=-1, keys={}, T=0
 let bals=[],fallingPoops=[],poopPiles=[],pops=[],trails=[],sparks=[],stars=[],clouds=[],hearts=[];
 let sleeping=false,nearH=false,nearK=false,nearBarn=false,lvlT=0,msgT=0,guardOpen=0;
 let tractor={x:0,y:0,vx:0,fr:true,cargo:0,wheelPhase:0};
-let girl={x:0,y:0,vx:0,vy:0,fr:true,carrots:0,outfit:7,helmet:1,hasSaddle:false,out:false,walk:0,wave:0,plush:-1,shoes:0,jy:0,jv:0,
+let girl={x:0,y:0,vx:0,vy:0,fr:true,carrots:0,outfit:7,helmet:1,hasSaddle:false,out:false,walk:0,wave:0,plush:-1,shoes:0,glasses:0,sweater:0,jy:0,jv:0,
           floor:0,ix:0,st:-1,bx:0,onThrone:false};
 let girlNearK=false,girlNearUni=-1,saveName='';
 let hs=[];try{hs=JSON.parse(localStorage.getItem('uhs')||'[]');}catch(e){hs=[];}
@@ -544,7 +544,7 @@ function initU(){
   });
   tractor.x=W*0.68;tractor.y=GROUND();tractor.vx=0;tractor.fr=true;tractor.cargo=0;tractor.wheelPhase=0;
   plushLoc=Array(PLUSHIES.length).fill(null);prince.riding=false;prince.outfit=0;pending=null;
-  Object.assign(girl,{x:cRect().doorX,y:GROUND(),vx:0,vy:0,fr:true,carrots:0,outfit:7,helmet:1,hasSaddle:false,out:false,plush:-1,shoes:0,jy:0,jv:0,
+  Object.assign(girl,{x:cRect().doorX,y:GROUND(),vx:0,vy:0,fr:true,carrots:0,outfit:7,helmet:1,hasSaddle:false,out:false,plush:-1,shoes:0,glasses:0,sweater:0,jy:0,jv:0,
     walk:0,wave:0,floor:0,ix:0,st:-1,bx:0,onThrone:false});
   mode='uni';scene='outside';aIdx=0;rideIdx=-1;
 }
@@ -659,16 +659,16 @@ function closeWardrobe(){
   gState='playing';$('wardScr').classList.add('hidden');
   if(wardWho==='k'){showMsg(`🤴 Der Prinz trägt jetzt: ${PRINCE_OUTFITS[prince.outfit].name}`);return;}
   const hw=HEADWEAR[girl.helmet];
-  showMsg(`✨ ${OUTFITS[girl.outfit].name}${hw.type!=='none'?' + '+hw.name:''}${girl.plush>=0?' + 🧸 '+PLUSHIES[girl.plush].n:''}`);
+  showMsg(`✨ ${OUTFITS[girl.outfit].name}${girl.sweater?' + '+SWEATERS[girl.sweater].name:''}${girl.glasses?' + '+GLASSES[girl.glasses].name:''}${hw.type!=='none'?' + '+hw.name:''}${girl.plush>=0?' + 🧸 '+PLUSHIES[girl.plush].n:''}`);
 }
 window.setWardTab=function(t){wardTab=t;renderWard();};
 function prepCanvas(cv){const c=cv.getContext('2d');c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cv.width,cv.height);c.scale(cv.width/parseInt(cv.style.width),cv.width/parseInt(cv.style.width));return c;}
 function renderWard(){
   const TABS=wardWho==='k'?[['uniform','👑 Uniform & Robe'],['armor','🛡️ Ritterrüstungen'],['kpyjama','🌙 Schlafanzüge']]
-    :[['kleider','👗 Kleider'],['pyjama','🌙 Schlafanzüge'],['helme','👑 Kopfschmuck'],['schuhe','👟 Schuhe'],['kuschel','🧸 Kuscheltiere']];
+    :[['kleider','👗 Kleider'],['pyjama','🌙 Schlafanzüge'],['pulli','🧶 Pullover'],['helme','👑 Kopfschmuck'],['brille','🕶️ Brillen'],['schuhe','👟 Schuhe'],['kuschel','🧸 Kuscheltiere']];
   $('wardTabs').innerHTML=TABS.map(([t,l])=>`<button class="tab${wardTab===t?' active':''}" onclick="setWardTab('${t}')">${l}</button>`).join('');
   $('wardTitle').textContent=wardWho==='k'?'🤴 Schrank des Prinzen':'👗 Kleiderschrank';
-  $('wardSub').textContent=wardWho==='k'?'Uniformen, Roben, Ritterrüstungen und Schlafanzüge':'Kleider, Schlafanzüge, Kopfschmuck, Schuhe und Kuscheltiere';
+  $('wardSub').textContent=wardWho==='k'?'Uniformen, Roben, Ritterrüstungen und Schlafanzüge':'Kleider, Schlafanzüge, Pullover, Kopfschmuck, Brillen, Schuhe und Kuscheltiere';
   const big=prepCanvas($('wardBig'));
   if(wardWho==='k'){
     drawPrince(big,{x:65,y:164,s:1.85,outfit:prince.outfit});
@@ -683,16 +683,18 @@ function renderWard(){
     });
     return;
   }
-  drawPrincess(big,{x:65,y:162,s:1.95,outfit:girl.outfit,helmet:girl.helmet,plush:girl.plush,shoes:girl.shoes});
+  drawPrincess(big,{x:65,y:162,s:1.95,outfit:girl.outfit,helmet:girl.helmet,plush:girl.plush,shoes:girl.shoes,glasses:girl.glasses,sweater:girl.sweater});
   const grid=$('outfitGrid');grid.innerHTML='';
   let items;
   if(wardTab==='kleider'||wardTab==='pyjama')items=OUTFITS.map((o,i)=>({name:o.name,i})).filter(({i})=>(OUTFITS[i].style==='pajama')===(wardTab==='pyjama'));
   else if(wardTab==='helme'){items=[];HW_GROUPS.forEach(([g,l])=>{items.push({header:l});HEADWEAR.forEach((o,i)=>{if(o.grp===g)items.push({name:o.name,i});});});}
+  else if(wardTab==='pulli'){items=[];SW_GROUPS.forEach(([g,l])=>{items.push({header:l});SWEATERS.forEach((o,i)=>{if(o.grp===g)items.push({name:o.name,i});});});}
+  else if(wardTab==='brille'){items=[];GL_GROUPS.forEach(([g,l])=>{items.push({header:l});GLASSES.forEach((o,i)=>{if(o.grp===g)items.push({name:o.name,i});});});}
   else if(wardTab==='schuhe'){items=[];SHOE_GROUPS.forEach(([g,l])=>{items.push({header:l});SHOES.forEach((o,i)=>{if(o.grp===g)items.push({name:o.name,i});});});}
   else items=PLUSHIES.map((o,i)=>({name:o.n+(girl.plush===i?' ✓':plushLoc[i]?' ('+PLACE_NAMES[plushLoc[i].s]+')':''),i}));
   items.forEach(({name,i,header})=>{
     if(header){const h=document.createElement('div');h.className='ogroup';h.textContent=header;grid.appendChild(h);return;}
-    const sel=wardTab==='helme'?girl.helmet===i:wardTab==='schuhe'?girl.shoes===i:wardTab==='kuschel'?girl.plush===i:girl.outfit===i;
+    const sel=wardTab==='helme'?girl.helmet===i:wardTab==='pulli'?girl.sweater===i:wardTab==='brille'?girl.glasses===i:wardTab==='schuhe'?girl.shoes===i:wardTab==='kuschel'?girl.plush===i:girl.outfit===i;
     const btn=document.createElement('div');
     btn.className='outfit-btn'+(sel?' active':'');
     const cv=document.createElement('canvas');cv.width=128;cv.height=160;cv.style.width='64px';cv.style.height='80px';
@@ -700,12 +702,16 @@ function renderWard(){
     const nm=document.createElement('div');nm.className='oname';nm.textContent=name;btn.appendChild(nm);
     const c=prepCanvas(cv);
     if(wardTab==='helme')drawPrincess(c,{x:32,y:150,s:1.55,outfit:girl.outfit,helmet:i});
+    else if(wardTab==='pulli')drawPrincess(c,{x:32,y:118,s:1.45,outfit:girl.outfit,helmet:girl.helmet,glasses:girl.glasses,sweater:i});
+    else if(wardTab==='brille')drawPrincess(c,{x:29,y:200,s:2.45,outfit:girl.outfit,helmet:0,glasses:i,sweater:girl.sweater});
     else if(wardTab==='schuhe')drawShoeIcon(c,32,66,3.1,i,OUTFITS[girl.outfit]);
     else if(wardTab==='kuschel')drawPlush(c,32,74,1.85,i);
-    else drawPrincess(c,{x:32,y:78,s:0.98,outfit:i,helmet:girl.helmet,shoes:girl.shoes});
+    else drawPrincess(c,{x:32,y:78,s:0.98,outfit:i,helmet:girl.helmet,shoes:girl.shoes,glasses:girl.glasses,sweater:girl.sweater});
     btn.addEventListener('click',()=>{
       if(wardTab==='helme')girl.helmet=i;
       else if(wardTab==='schuhe')girl.shoes=i;
+      else if(wardTab==='pulli')girl.sweater=i;
+      else if(wardTab==='brille')girl.glasses=i;
       else if(wardTab==='kuschel'){
         if(girl.plush===i)girl.plush=-1;
         else{girl.plush=i;plushLoc[i]=null;}
@@ -910,8 +916,8 @@ function snapshot(name){
     popped:bals.filter(b=>!b.alive).length,
     piles:poopPiles.map(p=>({x:r(p.x/W),a:Math.round(p.amount)})),
     tractor:{x:r(tractor.x/W),cargo:Math.round(tractor.cargo)},
-    girl:{x:r(girl.x/W),carrots:girl.carrots,outfit:girl.outfit,helmet:girl.helmet,plush:girl.plush,shoes:girl.shoes,hasSaddle:girl.hasSaddle,out:girl.out||scene!=='outside',
-      plush:girl.plush,shoes:girl.shoes,pl:plushLoc.map(l=>l?{s:l.s,x:r(l.x),f:l.f||0}:0)}};
+    girl:{x:r(girl.x/W),carrots:girl.carrots,outfit:girl.outfit,helmet:girl.helmet,plush:girl.plush,shoes:girl.shoes,glasses:girl.glasses,sweater:girl.sweater,hasSaddle:girl.hasSaddle,out:girl.out||scene!=='outside',
+      plush:girl.plush,shoes:girl.shoes,glasses:girl.glasses,sweater:girl.sweater,pl:plushLoc.map(l=>l?{s:l.s,x:r(l.x),f:l.f||0}:0)}};
 }
 async function saveGame(name){
   const s=snapshot(name),key=safeKey(name);
@@ -987,7 +993,7 @@ function applySave(s){
   tractor.x=((s.tractor&&s.tractor.x)??0.68)*W;tractor.cargo=(s.tractor&&s.tractor.cargo)||0;
   const g=s.girl||{};
   plushLoc=Array(PLUSHIES.length).fill(null);(g.pl||[]).forEach((l,i)=>{if(l&&i<PLUSHIES.length)plushLoc[i]={s:l.s,x:l.x,f:l.f||0};});
-  Object.assign(girl,{plush:g.plush??-1,shoes:g.shoes||0,carrots:g.carrots||0,outfit:g.outfit??7,helmet:g.helmet??1,hasSaddle:!!g.hasSaddle,x:(g.x??0.1)*W,y:GROUND(),out:!!g.out});
+  Object.assign(girl,{plush:g.plush??-1,shoes:g.shoes||0,glasses:g.glasses||0,sweater:g.sweater||0,carrots:g.carrots||0,outfit:g.outfit??7,helmet:g.helmet??1,hasSaddle:!!g.hasSaddle,x:(g.x??0.1)*W,y:GROUND(),out:!!g.out});
   aIdx=Math.min(s.aIdx||0,FAM.length-1);mode=s.mode||'uni';rideIdx=s.rideIdx??-1;
   if(mode==='ride'){if(rideIdx<0||!girl.hasSaddle){mode='girl';girl.out=true;}else{aIdx=rideIdx;girl.out=false;}}
   if(mode==='girl'&&!girl.out){girl.out=true;girl.x=cRect().doorX;}
@@ -1116,6 +1122,116 @@ function bricks(x,y,w,h,col,bh){
   X.stroke();
 }
 
+// ═══════════════ BRILLEN & PULLOVER ═══════════════
+const GLASSES=[
+  {name:'Keine Brille',type:'none',grp:'none'},
+  {name:'Coole Sonnenbrille',type:'round',frame:'#1a1a1a',lens:'#1a1a2a',sun:true,grp:'sun'},
+  {name:'Pilotenbrille',type:'aviator',frame:'#d4af37',lens:'#4a3a20',sun:true,grp:'sun'},
+  {name:'Herz-Sonnenbrille',type:'heart',frame:'#ff3d7f',lens:'#c0123f',sun:true,grp:'sun'},
+  {name:'Stern-Sonnenbrille',type:'star',frame:'#ffd23f',lens:'#e07a10',sun:true,grp:'sun'},
+  {name:'Katzenaugen-Sonnenbrille',type:'cateye',frame:'#ffffff',lens:'#22222e',sun:true,grp:'sun'},
+  {name:'Regenbogen-Brille',type:'round',frame:'#ffffff',lens:'rainbow',sun:true,grp:'sun'},
+  {name:'Spiegel-Sportbrille',type:'visor',frame:'#e8e8f0',lens:'mirror',sun:true,grp:'sun'},
+  {name:'Sonnenbrille passend',type:'square',frame:'match',lens:'#202030',sun:true,thick:true,grp:'sun'},
+  {name:'Party-Glitzerbrille',type:'star',frame:'#c070ff',lens:'#6a2aa0',sun:true,glitter:true,grp:'sun'},
+  {name:'Runde Goldbrille',type:'round',frame:'#d4af37',grp:'read'},
+  {name:'Schwarze Nerdbrille',type:'square',frame:'#1a1a1a',thick:true,grp:'read'},
+  {name:'Rote Katzenaugen-Brille',type:'cateye',frame:'#d0203a',thick:true,grp:'read'},
+  {name:'Halbmond-Lesebrille',type:'halfmoon',frame:'#8a5a2a',grp:'read'},
+  {name:'Schildpatt-Brille',type:'square',frame:'#8a4a1a',thick:true,tort:true,grp:'read'},
+  {name:'Rosa Brille',type:'round',frame:'#ff7ab8',thick:true,grp:'read'},
+  {name:'Blaue Brille',type:'square',frame:'#2a6ad0',thick:true,grp:'read'},
+  {name:'Glitzer-Brille',type:'cateye',frame:'#ffd700',glitter:true,thick:true,grp:'read'},
+  {name:'Brille passend',type:'round',frame:'match',thick:true,grp:'read'},
+];
+const GL_GROUPS=[['none','✨ Ohne'],['sun','😎 Sonnenbrillen'],['read','👓 Brillen']];
+const SWEATERS=[
+  {name:'Kein Pullover',type:'none',grp:'none'},
+  {name:'Pulli passend',type:'plain',col:'match',grp:'pulli'},
+  {name:'Rosa Pulli',type:'plain',col:'#ff9cc8',grp:'pulli'},
+  {name:'Weißer Pulli',type:'plain',col:'#f4f2fa',grp:'pulli'},
+  {name:'Rollkragenpulli',type:'turtle',col:'#2f8a7a',grp:'pulli'},
+  {name:'Kuschel-Fleece',type:'fleece',col:'#fff4e8',grp:'pulli'},
+  {name:'Herz-Pulli',type:'heart',col:'#ffffff',col2:'#ff3d7f',grp:'motiv'},
+  {name:'Herz-Pulli passend',type:'heart',col:'match',col2:'#ffffff',grp:'motiv'},
+  {name:'Stern-Pulli',type:'star',col:'#2b3a8a',col2:'#ffd23f',grp:'motiv'},
+  {name:'Einhorn-Pulli',type:'unicorn',col:'#eadcff',col2:'#ffd700',grp:'motiv'},
+  {name:'Streifen-Pulli',type:'stripes',col:'#ffffff',col2:'#3a7ae8',grp:'motiv'},
+  {name:'Streifen passend',type:'stripes',col:'#ffffff',col2:'match',grp:'motiv'},
+  {name:'Regenbogen-Pulli',type:'rainbow',col:'#ffffff',grp:'motiv'},
+  {name:'Norweger-Pulli',type:'nordic',col:'#c8203a',col2:'#ffffff',grp:'motiv'},
+  {name:'Strickjacke passend',type:'cardigan',col:'match',col2:'#ffffff',grp:'jacke'},
+  {name:'Strickjacke Beige',type:'cardigan',col:'#e8d6b0',col2:'#8a5a2a',grp:'jacke'},
+  {name:'Kapuzenpulli Grau',type:'hoodie',col:'#9a9aa8',grp:'jacke'},
+  {name:'Kapuzenpulli Lila',type:'hoodie',col:'#9a5ad8',grp:'jacke'},
+];
+const SW_GROUPS=[['none','✨ Ohne'],['pulli','🧶 Pullis'],['motiv','💖 Motiv-Pullis'],['jacke','🧥 Jacken & Kapuzenpullis']];
+function mixHex(a,b,t){const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));const A=p(a),B=p(b);
+  return'#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('');}
+function swCol(v,of){if(v==='match'){const d=of.rainbow?'#ff6688':of.dress;return mixHex(d,'#ffffff',0.4);}return v;}
+function drawSweater(c,SW,col,of){
+  const t=SW.type,c2=SW.col2==='match'?(of.rainbow?'#ff6688':of.dress):(SW.col2||'#ffffff'),dk=mixHex(col,'#000000',0.18);
+  if(t==='hoodie'){c.fillStyle=dk;c.beginPath();c.ellipse(-3,-58.5,11,9.5,0,0,6.28);c.fill();}
+  const body=()=>{c.beginPath();c.moveTo(-7.8,-52);c.lineTo(7.8,-52);c.quadraticCurveTo(9.6,-44,9,-32.5);c.lineTo(-9,-32.5);c.quadraticCurveTo(-9.6,-44,-7.8,-52);c.closePath();};
+  c.fillStyle=col;body();c.fill();
+  c.beginPath();c.ellipse(-7.5,-48.5,3.9,3.3,0,0,6.28);c.ellipse(7.5,-48.5,3.9,3.3,0,0,6.28);c.fill();
+  c.save();body();c.clip();
+  if(t==='rainbow')['#ff4466','#ff9933','#ffdd33','#55dd66','#44aaff','#aa66ff'].forEach((rc,i)=>{c.fillStyle=rc;c.fillRect(-10,-51+i*3,20,3);});
+  if(t==='stripes'){c.fillStyle=c2;for(let y=-50;y<-34;y+=4)c.fillRect(-10,y,20,1.8);}
+  if(t==='nordic'){c.fillStyle=c2;c.fillRect(-10,-47.5,20,4.5);c.fillStyle=col;for(let x=-9;x<10;x+=3){c.beginPath();c.moveTo(x,-47.5);c.lineTo(x+1.5,-45.2);c.lineTo(x,-43);c.lineTo(x-1.5,-45.2);c.closePath();c.fill();}
+    c.fillStyle=c2;[[-4,-39],[4,-40],[0,-36.5]].forEach(([sx,sy])=>starShape(c,sx,sy,1.4));}
+  if(t==='cardigan'){c.fillStyle=of.dress;c.fillRect(-1.7,-52,3.4,20);c.fillStyle=c2;[-48,-44,-40,-36].forEach(y=>{c.beginPath();c.arc(2.6,y,0.9,0,6.28);c.fill();});}
+  c.restore();
+  if(t==='heart'){c.fillStyle=c2;heartShape(c,0.5,-41.5,5.2);}
+  if(t==='star'){c.fillStyle=c2;starShape(c,0.5,-43,5.2);}
+  if(t==='unicorn'){c.fillStyle=c2;c.beginPath();c.moveTo(-1.6,-38.5);c.lineTo(1.6,-38.5);c.lineTo(0.6,-48.5);c.closePath();c.fill();
+    ['#ff77bb','#66ccff','#aa77ff'].forEach((mc,i)=>{c.fillStyle=mc;c.beginPath();c.arc(-3.6+i*0.4,-46+i*3,1.4,0,6.28);c.fill();});}
+  if(t==='hoodie'){c.fillStyle=dk;c.beginPath();c.roundRect(-5.5,-40.5,11,5,2);c.fill();
+    c.strokeStyle='#ffffff';c.lineWidth=0.7;c.beginPath();c.moveTo(-1.8,-52);c.lineTo(-2.2,-45);c.moveTo(1.8,-52);c.lineTo(2.2,-45);c.stroke();}
+  if(t==='fleece'){c.fillStyle=mixHex(col,'#000000',0.08);[[-5,-47],[3,-45],[-2,-40],[5,-38],[-6,-37]].forEach(([fx,fy])=>{c.beginPath();c.arc(fx,fy,1.4,0,6.28);c.fill();});}
+  // Bündchen und Kragen
+  c.fillStyle=dk;c.fillRect(-9,-35,18,2.6);
+  if(t==='turtle'){c.fillStyle=col;c.beginPath();c.roundRect(-3.8,-56.5,7.6,5.5,1.6);c.fill();c.strokeStyle=dk;c.lineWidth=0.6;c.beginPath();for(let x=-2.4;x<3;x+=1.6){c.moveTo(x,-56);c.lineTo(x,-51.5);}c.stroke();}
+  else if(t!=='hoodie'&&t!=='cardigan'){c.fillStyle=dk;c.fillRect(-3.6,-52.6,7.2,1.7);}
+  if(t==='fleece'){c.fillStyle='#ffffff';for(let x=-8;x<=8;x+=2.7){c.beginPath();c.arc(x,-33.6,1.2,0,6.28);c.fill();}}
+}
+function lensPath(c,t,ex,y,outer){
+  c.beginPath();
+  if(t==='round')c.arc(ex,y,3.2,0,6.28);
+  else if(t==='square')c.roundRect(ex-3.5,y-2.7,7,5.4,1.3);
+  else if(t==='aviator'){c.moveTo(ex-3.4,y-2.3);c.lineTo(ex+3.4,y-2.5);c.quadraticCurveTo(ex+3.7,y+3.7,ex,y+3.4);c.quadraticCurveTo(ex-3.7,y+3,ex-3.4,y-2.3);}
+  else if(t==='heart'){const s=4.4,hy=y+1.3;c.moveTo(ex,hy+s*0.35);c.bezierCurveTo(ex-s,hy-s*0.4,ex-s*0.4,hy-s,ex,hy-s*0.4);c.bezierCurveTo(ex+s*0.4,hy-s,ex+s,hy-s*0.4,ex,hy+s*0.35);}
+  else if(t==='star'){for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?2.2:4.6;c.lineTo(ex+Math.cos(a)*r,y+0.4+Math.sin(a)*r);}c.closePath();}
+  else if(t==='cateye'){c.moveTo(ex-3.4,y-1.6);c.quadraticCurveTo(ex,y-3.2,ex+3.4,y-1.6);c.lineTo(ex+outer*1.6+(outer>0?3.4:0),y-3.4);
+    c.quadraticCurveTo(ex+3.8,y+3.2,ex,y+2.6);c.quadraticCurveTo(ex-3.8,y+3,ex-3.4,y-1.6);}
+  else if(t==='halfmoon'){c.moveTo(ex-3.3,y);c.arc(ex,y,3.3,Math.PI,0,true);c.closePath();}
+}
+function drawGlasses(c,gl,of,fx){
+  if(!gl||gl.type==='none')return;
+  const L=fx-3.7,R=fx+3.7,y=-62.3,fr=gl.frame==='match'?(of.rainbow?'#ff6688':of.dress):gl.frame,lw=gl.thick?1.35:0.8;
+  const lensFill=(x0,x1)=>{
+    if(!gl.sun)return'rgba(210,235,255,0.28)';
+    if(gl.lens==='rainbow'){const g=c.createLinearGradient(0,y-3,0,y+3);['#ff4466','#ffdd33','#55dd66','#44aaff','#aa66ff'].forEach((rc,i)=>g.addColorStop(i/4,rc));return g;}
+    if(gl.lens==='mirror'){const g=c.createLinearGradient(x0,y-3,x1,y+3);g.addColorStop(0,'#5ac8ff');g.addColorStop(0.5,'#c0f0ff');g.addColorStop(1,'#3a6ad0');return g;}
+    return gl.lens;
+  };
+  c.strokeStyle=fr;c.lineWidth=0.8;c.beginPath();c.moveTo(L-3.3,y-1);c.lineTo(-10.6,y-2);c.moveTo(R+3.3,y-1);c.lineTo(10.9,y-2);c.stroke();
+  if(gl.type==='visor'){
+    c.fillStyle=lensFill(L-4,R+4);c.beginPath();c.roundRect(L-4.2,y-2.9,R-L+8.4,5.6,2.6);c.fill();
+    c.strokeStyle=fr;c.lineWidth=1.3;c.stroke();
+    c.strokeStyle='rgba(255,255,255,0.7)';c.lineWidth=0.7;c.beginPath();c.moveTo(L-2.5,y-1.5);c.lineTo(L+1,y-1.5);c.stroke();
+    return;
+  }
+  [[L,-1],[R,1]].forEach(([ex,outer])=>{
+    lensPath(c,gl.type,ex,y,outer);c.fillStyle=lensFill(ex-3,ex+3);c.fill();
+    if(gl.type==='halfmoon'){c.strokeStyle=fr;c.lineWidth=lw;c.beginPath();c.arc(ex,y,3.3,0,Math.PI);c.stroke();}
+    else{lensPath(c,gl.type,ex,y,outer);c.strokeStyle=fr;c.lineWidth=lw;c.stroke();}
+    if(gl.sun){c.strokeStyle='rgba(255,255,255,0.6)';c.lineWidth=0.6;c.beginPath();c.moveTo(ex-1.8,y-1.2);c.lineTo(ex-0.4,y-2);c.stroke();}
+    if(gl.tort){c.fillStyle='#3a1a08';[[-2.6,-2.2],[1.8,-2.4],[3,1],[-3,1.4],[0,3]].forEach(([dx,dy])=>{c.beginPath();c.arc(ex+dx,y+dy,0.5,0,6.28);c.fill();});}
+    if(gl.glitter){c.fillStyle=`rgba(255,255,255,${0.5+Math.sin(T*6+ex)*0.45})`;starShape(c,ex+outer*3.3,y-2.6,1.1);}
+  });
+  c.strokeStyle=fr;c.lineWidth=lw;c.beginPath();c.moveTo(L+(gl.type==='star'?2:3),y-1);c.quadraticCurveTo(fx,y-2.4,R-(gl.type==='star'?2:3),y-1);c.stroke();
+}
 function pjMark(c,pt,x,y,col,bg){
   c.fillStyle=col;
   if(pt==='stars')starShape(c,x,y,1.7);
@@ -1135,7 +1251,8 @@ function drawPrincess(c,o){
   c.fillStyle=hair;c.beginPath();c.moveTo(-10,-66);c.quadraticCurveTo(-16,-50,-11,-37);c.lineTo(9,-37);c.quadraticCurveTo(14,-50,10,-66);c.closePath();c.fill();
   c.shadowBlur=0;
   // Beine
-  const legCol=pants?of.pants:skin,SH=shoeSpec(o,of);
+  const legCol=pants?of.pants:skin,SH=shoeSpec(o,of),SW=SWEATERS[o.sweater]||SWEATERS[0],swOn=SW.type!=='none',swC=swOn?swCol(SW.col,of):null;
+  const armFill=()=>{c.fillStyle=swOn?swC:(pants?of.sleeve:skin);c.fillRect(-1.8,0,3.6,12);if(swOn){c.fillStyle=mixHex(swC,'#000000',0.18);c.fillRect(-2,9.6,4,2.4);}};
   if(o.sit){
     [[-2,0.82],[1.5,1]].forEach(([dx,sh])=>{
       c.fillStyle=legCol;c.globalAlpha=sh;c.fillRect(-3+dx,-22,13,4.2);c.fillRect(7+dx,-22,4,15);
@@ -1155,7 +1272,7 @@ function drawPrincess(c,o){
     if(pj&&of.pt==='stripes'){c.fillStyle=of.pat;for(let yy=-29;yy<-19;yy+=4)c.fillRect(-6,yy,12,1.2);}}
   // hinterer Arm
   c.save();c.translate(-7,-48);c.rotate(o.sit?-0.9:wk*0.8);
-  c.fillStyle=pants?of.sleeve:skin;c.fillRect(-1.8,0,3.6,12);c.fillStyle=skin;c.beginPath();c.arc(0,13,2.1,0,6.28);c.fill();c.restore();
+  armFill();c.fillStyle=skin;c.beginPath();c.arc(0,13,2.1,0,6.28);c.fill();c.restore();
   // Rock
   const skirtFill=()=>{
     if(of.rainbow){const g=c.createLinearGradient(-20,0,20,0);['#ff4466','#ff9933','#ffdd33','#55dd66','#44aaff','#aa66ff'].forEach((col,i)=>g.addColorStop(i/5,col));return g;}
@@ -1192,13 +1309,14 @@ function drawPrincess(c,o){
   else{c.fillStyle=of.ribbon;c.fillRect(-6.6,-40,13.2,3);
     if(of.style==='gown'){c.fillStyle='#ffe680';c.beginPath();c.arc(0,-50,1.3,0,6.28);c.fill();}}
   // Puffärmel
-  c.fillStyle=of.sleeve;c.beginPath();c.ellipse(-7.5,-48,4.4,3.6,0,0,6.28);c.ellipse(7.5,-48,4.4,3.6,0,0,6.28);c.fill();
+  if(swOn)drawSweater(c,SW,swC,of);
+  else{c.fillStyle=of.sleeve;c.beginPath();c.ellipse(-7.5,-48,4.4,3.6,0,0,6.28);c.ellipse(7.5,-48,4.4,3.6,0,0,6.28);c.fill();}
   // Kuscheltier im Arm
   if(o.plush>=0&&!o.hold)drawPlush(c,4.5,-29,0.5,o.plush);
   // vorderer Arm (winkt)
   c.save();c.translate(7.5,-48);
   const wa=o.hold?-2.65:o.wave>0?-2.5+Math.sin(T*14)*0.32:(o.sit?-1.1:(o.plush>=0?0.75:-wk*0.8));
-  c.rotate(wa);c.fillStyle=pants?of.sleeve:skin;c.fillRect(-1.8,0,3.6,12);c.fillStyle=skin;c.beginPath();c.arc(0,13,2.1,0,6.28);c.fill();c.restore();
+  c.rotate(wa);armFill();c.fillStyle=skin;c.beginPath();c.arc(0,13,2.1,0,6.28);c.fill();c.restore();
   // Hals + Kopf
   c.fillStyle=skin;c.fillRect(-2,-55,4,5);
   c.beginPath();c.arc(0,-62,10.5,0,6.28);c.fill();
@@ -1220,6 +1338,8 @@ function drawPrincess(c,o){
   c.quadraticCurveTo(8,-67,3.5,-67);c.quadraticCurveTo(1.5,-69.5,-0.5,-66.8);c.quadraticCurveTo(-6,-68.5,-10.6,-61);c.closePath();c.fill();
   c.beginPath();c.moveTo(-10.6,-63);c.quadraticCurveTo(-12.5,-55,-10.5,-49);c.lineTo(-8.3,-50);c.quadraticCurveTo(-9.8,-56,-8.6,-63);c.closePath();c.fill();
   c.beginPath();c.moveTo(10.6,-63);c.quadraticCurveTo(12.5,-55,10.5,-49);c.lineTo(8.3,-50);c.quadraticCurveTo(9.8,-56,8.6,-63);c.closePath();c.fill();
+  // Brille
+  if(o.glasses>0)drawGlasses(c,GLASSES[o.glasses],of,fx);
   // Kopfbedeckung
   drawHeadwear(c,hw,of);
   c.restore();
@@ -1476,7 +1596,7 @@ function drawUnicorn(u,act,ridden){
     X.lineTo(12.5*s,-bh*0.52);X.quadraticCurveTo(0,-bh*0.38,-13*s,-bh*0.5);X.closePath();X.fill();
     const ps=0.55+0.25*s;
     if(prince.on&&prince.riding)drawPrince(X,{x:-16*s,y:-bh*0.43+24*ps*0.95,s:ps*0.95,fr:true,sit:true});
-    drawPrincess(X,{x:(prince.on&&prince.riding?6:-1)*s,y:-bh*0.43+20*ps,s:ps,fr:true,outfit:girl.outfit,helmet:girl.helmet,plush:girl.plush,shoes:girl.shoes,sit:true,wave:girl.wave});
+    drawPrincess(X,{x:(prince.on&&prince.riding?6:-1)*s,y:-bh*0.43+20*ps,s:ps,fr:true,outfit:girl.outfit,helmet:girl.helmet,plush:girl.plush,shoes:girl.shoes,glasses:girl.glasses,sweater:girl.sweater,sit:true,wave:girl.wave});
   }
   const hx=bw*0.35,hy=-bh*0.25;
   X.beginPath();X.moveTo(bw*0.2,-bh*0.15);X.quadraticCurveTo(bw*0.3,-bh*0.35,hx,hy);
@@ -1653,8 +1773,8 @@ function drawCastleInterior(){
   drawPlacedPlush('castle',f=>(f?f1:f0)+2);
   drawPrinceScene();
   const p=girlInPos(),gs=1.3;
-  if(girl.onThrone)drawPrincess(X,{x:g.throneX,y:f0-52+20*gs,s:gs,fr:true,outfit:girl.outfit,helmet:girl.helmet,plush:girl.plush,shoes:girl.shoes,sit:true,wave:girl.wave});
-  else drawPrincess(X,{x:p.x,y:p.y+girl.jy,s:gs,fr:girl.fr,walk:girl.walk,outfit:girl.outfit,helmet:girl.helmet,plush:girl.plush,shoes:girl.shoes,wave:girl.wave,glow:true});
+  if(girl.onThrone)drawPrincess(X,{x:g.throneX,y:f0-52+20*gs,s:gs,fr:true,outfit:girl.outfit,helmet:girl.helmet,plush:girl.plush,shoes:girl.shoes,glasses:girl.glasses,sweater:girl.sweater,sit:true,wave:girl.wave});
+  else drawPrincess(X,{x:p.x,y:p.y+girl.jy,s:gs,fr:girl.fr,walk:girl.walk,outfit:girl.outfit,helmet:girl.helmet,plush:girl.plush,shoes:girl.shoes,glasses:girl.glasses,sweater:girl.sweater,wave:girl.wave,glow:true});
   // Geländer (vorne)
   X.strokeStyle='#d4af37';X.lineWidth=2;X.beginPath();
   for(let i=0;i<=N;i+=1){const sx=g.sb.x+i*step,sy=f0-i*rise;X.moveTo(sx,sy);X.lineTo(sx,sy-44);}
@@ -1733,7 +1853,7 @@ function drawBalcony(){
   // Efeu
   X.fillStyle='#3f9a4a';for(let i=0;i<14;i++){X.beginPath();X.ellipse(ww+4+Math.sin(i*1.3)*6,H-150+i*7,5,3,i,0,6.28);X.fill();}
   drawPlacedPlush('balcony',()=>H-58);drawPrinceScene();
-  drawPrincess(X,{x:girl.bx,y:H-60+girl.jy,s:1.45,fr:girl.fr,walk:girl.walk,outfit:girl.outfit,helmet:girl.helmet,plush:girl.plush,shoes:girl.shoes,wave:girl.wave,glow:true});
+  drawPrincess(X,{x:girl.bx,y:H-60+girl.jy,s:1.45,fr:girl.fr,walk:girl.walk,outfit:girl.outfit,helmet:girl.helmet,plush:girl.plush,shoes:girl.shoes,glasses:girl.glasses,sweater:girl.sweater,wave:girl.wave,glow:true});
   hint('← → laufen · W = Winken 👋 · ↓ = zurück ins Schloss',W/2,H-18,'#ffe6ff');
 }
 
@@ -2121,7 +2241,7 @@ function drawDancer(who){
   X.fillStyle='rgba(0,0,0,0.28)';X.beginPath();X.ellipse(x,fy+2,24*Math.max(0.4,1-(fy-y)/140),5,0,0,6.28);X.fill();
   X.save();X.translate(x,y);X.rotate(rot);X.scale(sx,sy);
   const o={x:0,y:0,s:S,fr,walk:d.walk,glow:true,wave};
-  if(who==='p')drawPrincess(X,{...o,outfit:girl.outfit,helmet:girl.helmet,plush:girl.plush,shoes:girl.shoes});else drawPrince(X,{...o,armsUp});
+  if(who==='p')drawPrincess(X,{...o,outfit:girl.outfit,helmet:girl.helmet,plush:girl.plush,shoes:girl.shoes,glasses:girl.glasses,sweater:girl.sweater});else drawPrince(X,{...o,armsUp});
   X.restore();
   if(!ceremony){
     X.font='12px Fredoka, sans-serif';X.textAlign='center';X.fillStyle=who==='p'?'#ffaaee':'#aaccff';X.shadowColor='rgba(0,0,0,0.7)';X.shadowBlur=3;
@@ -2211,7 +2331,7 @@ function drawCeremony(){
   X.fillStyle='#7a1a3a';X.fillRect(cx-125,py,250,26);X.fillStyle='#d4af37';X.fillRect(cx-125,py,250,4);
   X.fillStyle='#ffd700';X.font='bold 13px Fredoka, sans-serif';X.textAlign='center';X.fillText('★ Tanz-Champions ★',cx,py+19);
   const lift=t>1.6,fl=t>2.4;
-  drawPrincess(X,{x:cx-34,y:py,s:1.5,fr:true,outfit:girl.outfit,helmet:girl.helmet,plush:girl.plush,shoes:girl.shoes,hold:lift});
+  drawPrincess(X,{x:cx-34,y:py,s:1.5,fr:true,outfit:girl.outfit,helmet:girl.helmet,plush:girl.plush,shoes:girl.shoes,glasses:girl.glasses,sweater:girl.sweater,hold:lift});
   drawPrince(X,{x:cx+34,y:py,s:1.5,fr:false,hold:lift,bouquet:fl});
   if(fl){const bs=1.7*Math.min(1,(t-2.4)*3);drawBouquet(X,cx-46,py-50,bs);drawBouquet(X,cx+48,py-50,bs);}
   const ease=Math.min(1,t/1.6),ty=-80+(py-84+80)*(1-(1-ease)*(1-ease));
@@ -2262,7 +2382,7 @@ function drawTrophyRoom(){
   const dg=X.createLinearGradient(ex-28,0,ex+28,0);dg.addColorStop(0,'#5a3218');dg.addColorStop(0.5,'#86512a');dg.addColorStop(1,'#5a3218');X.fillStyle=dg;X.fill();
   X.strokeStyle='#d4af37';X.lineWidth=3;X.stroke();
   drawPlacedPlush('trophy',()=>fy+2);drawPrinceScene();
-  drawPrincess(X,{x:girl.tx,y:fy+girl.jy,s:1.3,fr:girl.fr,walk:girl.walk,outfit:girl.outfit,helmet:girl.helmet,plush:girl.plush,shoes:girl.shoes,wave:girl.wave,glow:true});
+  drawPrincess(X,{x:girl.tx,y:fy+girl.jy,s:1.3,fr:girl.fr,walk:girl.walk,outfit:girl.outfit,helmet:girl.helmet,plush:girl.plush,shoes:girl.shoes,glasses:girl.glasses,sweater:girl.sweater,wave:girl.wave,glow:true});
   hint(girl.tx<95?'↓ = Zurück in die Halle':'← → laufen · ↑ ↓ = Regalreihe wählen',W/2,H-14,'#ffe6ff');
 }
 
@@ -2603,7 +2723,7 @@ function updHUD(){
 function drawGirlOutside(){
   if(!girl.out)return;
   const act=mode==='girl';
-  drawPrincess(X,{x:girl.x,y:girl.y+girl.jy,s:1,fr:girl.fr,walk:girl.walk,outfit:girl.outfit,helmet:girl.helmet,plush:girl.plush,shoes:girl.shoes,wave:girl.wave,glow:act});
+  drawPrincess(X,{x:girl.x,y:girl.y+girl.jy,s:1,fr:girl.fr,walk:girl.walk,outfit:girl.outfit,helmet:girl.helmet,plush:girl.plush,shoes:girl.shoes,glasses:girl.glasses,sweater:girl.sweater,wave:girl.wave,glow:act});
   if(!act)return;
   X.font='12px Fredoka, sans-serif';X.textAlign='center';X.fillStyle='#ffaaee';X.shadowColor='rgba(0,0,0,0.6)';X.shadowBlur=3;
   X.fillText('👸 Prinzessin'+(girl.carrots?`  🥕×${girl.carrots}`:''),girl.x,girl.y-98);X.shadowBlur=0;
